@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/gocolly/colly"
+	"github.com/mhborthwick/awa-monitoring/internal/scraper"
 )
 
 const (
@@ -14,9 +13,5 @@ func main() {
 	c := colly.NewCollector(
 		colly.AllowedDomains(klaviyo),
 	)
-	c.OnHTML(".page-status", func(h *colly.HTMLElement) {
-		fmt.Println(h.ChildText(".status"))
-	})
-
-	c.Visit("https://status.klaviyo.com/")
+	scraper.GetKlaviyoStatus(c)
 }

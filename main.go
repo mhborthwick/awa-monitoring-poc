@@ -1,7 +1,18 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/gocolly/colly"
+)
 
 func main() {
-	fmt.Println("Hello world")
+	c := colly.NewCollector(
+		colly.AllowedDomains("status.klaviyo.com"),
+	)
+	c.OnHTML(".page-status", func(h *colly.HTMLElement) {
+		fmt.Println(h.ChildText(".status"))
+	})
+
+	c.Visit("https://status.klaviyo.com/")
 }

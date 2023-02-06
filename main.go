@@ -7,11 +7,13 @@ import (
 
 const (
 	klaviyo = "status.klaviyo.com"
+	hover   = "hoverstatus.com"
 )
 
 func main() {
 	c := colly.NewCollector(
-		colly.AllowedDomains(klaviyo),
+		colly.AllowedDomains(klaviyo, hover),
 	)
 	scraper.GetKlaviyoStatus(c)
+	scraper.GetHoverStatus(c)
 }

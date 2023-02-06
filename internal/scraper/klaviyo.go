@@ -6,13 +6,13 @@ import (
 	"github.com/gocolly/colly"
 )
 
-type Selector struct {
+type klaviyoSelector struct {
 	pageStatus string
 	status     string
 }
 
 func GetKlaviyoStatus(c *colly.Collector) {
-	selector := Selector{
+	selector := klaviyoSelector{
 		pageStatus: ".page-status",
 		status:     ".status",
 	}

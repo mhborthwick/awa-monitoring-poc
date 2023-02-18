@@ -16,6 +16,9 @@ func main() {
 	c := colly.NewCollector(
 		colly.AllowedDomains(klaviyo, hover),
 	)
+	// Scrape data from website
 	var entries = scraper.GetKlaviyoStatus(c)
 	fmt.Println(entries)
+
+	// TODO: Connect to InfluxDB
 }

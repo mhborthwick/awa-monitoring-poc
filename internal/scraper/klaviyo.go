@@ -1,23 +1,38 @@
 package scraper
 
 import (
-	"fmt"
-
 	"github.com/gocolly/colly"
 )
 
 type klaviyoSelector struct {
-	pageStatus string
-	status     string
+	container string
+	name      string
+	status    string
 }
 
-func GetKlaviyoStatus(c *colly.Collector) {
+type Entry struct {
+	name   string
+	status string
+}
+
+func GetKlaviyoStatus(c *colly.Collector) []Entry {
+	var items []Entry
+
 	selector := klaviyoSelector{
-		pageStatus: ".page-status",
-		status:     ".status",
+		container: ".components-container .component-inner-container",
+		name:      ".name",
+		status:    ".component-status",
 	}
-	c.OnHTML(selector.pageStatus, func(h *colly.HTMLElement) {
-		fmt.Println(h.ChildText(selector.status))
+
+	c.OnHTML(selector.container, func(h *colly.HTMLElement) {
+		item := Entry{
+			name:   h.ChildText(selector.name),
+			status: h.ChildText(selector.status),
+		}
+		items = append(items, item)
 	})
+
 	c.Visit("https://status.klaviyo.com/")
+
+	return items
 }

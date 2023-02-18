@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gocolly/colly"
 	"github.com/mhborthwick/awa-monitoring/internal/scraper"
 )
@@ -14,6 +16,6 @@ func main() {
 	c := colly.NewCollector(
 		colly.AllowedDomains(klaviyo, hover),
 	)
-	scraper.GetKlaviyoStatus(c)
-	scraper.GetHoverStatus(c)
+	var entries = scraper.GetKlaviyoStatus(c)
+	fmt.Println(entries)
 }

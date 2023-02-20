@@ -27,3 +27,15 @@ DOCKER_INFLUXDB_INIT_HOST=influxdb
 ```
 $ openssl rand -hex 32
 ```
+
+- Run Docker containers
+
+```
+$ docker compose up -d
+```
+
+## Run service
+
+```
+$ go run main.go
+```

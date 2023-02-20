@@ -1,21 +1,39 @@
 package scraper
 
 import (
-	"fmt"
-
 	"github.com/gocolly/colly"
 )
 
-type hoverSelector struct {
-	status string
+type HoverSelector struct {
+	Container string
+	Name      string
+	Status    string
 }
 
-func GetHoverStatus(c *colly.Collector) {
-	selector := hoverSelector{
-		status: "#statusio_components .component:nth-child(2) .component-status",
+type HoverEntry struct {
+	Name   string
+	Status string
+}
+
+func GetHoverStatus(c *colly.Collector) []HoverEntry {
+
+	var items []HoverEntry
+
+	selector := HoverSelector{
+		Container: "#statusio_components .component",
+		Name:      ".component_name",
+		Status:    ".component-status",
 	}
-	c.OnHTML(selector.status, func(h *colly.HTMLElement) {
-		fmt.Println(h.Text)
+
+	c.OnHTML(selector.Container, func(h *colly.HTMLElement) {
+		item := HoverEntry{
+			Name:   h.ChildText(selector.Name),
+			Status: h.ChildText(selector.Status),
+		}
+		items = append(items, item)
 	})
+
 	c.Visit("https://hoverstatus.com/")
+
+	return items
 }

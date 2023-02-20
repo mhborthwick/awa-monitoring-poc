@@ -39,3 +39,11 @@ $ docker compose up -d
 ```
 $ go run main.go
 ```
+
+## Stop containers
+
+Run the following to stop and remove containers:
+
+```
+$ docker compose down
+```

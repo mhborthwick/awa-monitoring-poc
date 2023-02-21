@@ -8,15 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/gocolly/colly"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/joho/godotenv"
 	"github.com/mhborthwick/awa-monitoring/internal/scraper"
-)
-
-const (
-	klaviyo string = "status.klaviyo.com"
-	hover   string = "hoverstatus.com"
 )
 
 type DataPoint struct {
@@ -39,36 +33,12 @@ func main() {
 	org := os.Getenv("DOCKER_INFLUXDB_INIT_ORG")
 	bucket := os.Getenv("DOCKER_INFLUXDB_INIT_BUCKET")
 
-	// Initialize colly - Klaviyo
-	c := colly.NewCollector(
-		colly.AllowedDomains(klaviyo),
-	)
-
-	// Initialize colly - Hover
-	c1 := colly.NewCollector(
-		colly.AllowedDomains(hover),
-	)
-
-	// Set selectors - Klaviyo
-	selector := scraper.Selector{
-		Container: ".components-container .component-inner-container",
-		Name:      ".name",
-		Status:    ".component-status",
-	}
-
-	// Set selectors - Hover
-	selector1 := scraper.Selector{
-		Container: "#statusio_components .component",
-		Name:      ".component_name",
-		Status:    ".component-status",
-	}
-
 	// Initialize items slice
 	var items []scraper.Item
 
 	// Scrape data - Klaviyo, Hover
-	items = append(items, scraper.ScrapeData(c, selector, "Klaviyo", "https://status.klaviyo.com/")...)
-	items = append(items, scraper.ScrapeData(c1, selector1, "Hover", "https://hoverstatus.com/")...)
+	items = append(items, scraper.ScrapeData("Klaviyo", "https://status.klaviyo.com/")...)
+	items = append(items, scraper.ScrapeData("Hover", "https://hoverstatus.com/")...)
 
 	// Create data points - Klaviyo, Hover
 	var dataPoints []DataPoint

@@ -19,18 +19,6 @@ const (
 	hover   string = "hoverstatus.com"
 )
 
-type Selector struct {
-	Container string
-	Name      string
-	Status    string
-}
-
-type Item struct {
-	Service string
-	Name    string
-	Status  string
-}
-
 type DataPoint struct {
 	Measurement string
 	Tags        map[string]string

@@ -11,20 +11,15 @@ import (
 	"github.com/gocolly/colly"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/joho/godotenv"
+	"github.com/mhborthwick/awa-monitoring/internal/scraper"
 )
 
 const (
-	klaviyo = "status.klaviyo.com"
-	hover   = "hoverstatus.com"
+	klaviyo string = "status.klaviyo.com"
+	hover   string = "hoverstatus.com"
 )
 
-type KlaviyoSelector struct {
-	Container string
-	Name      string
-	Status    string
-}
-
-type HoverSelector struct {
+type Selector struct {
 	Container string
 	Name      string
 	Status    string
@@ -46,64 +41,48 @@ type DataPoint struct {
 func main() {
 	// Load env variables
 	err := godotenv.Load()
+
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
+	// Assign env variables
 	token := os.Getenv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN")
 	org := os.Getenv("DOCKER_INFLUXDB_INIT_ORG")
 	bucket := os.Getenv("DOCKER_INFLUXDB_INIT_BUCKET")
 
-	// Initialize colly - klaviyo
+	// Initialize colly - Klaviyo
 	c := colly.NewCollector(
 		colly.AllowedDomains(klaviyo),
 	)
 
-	// Initialize colly - hover
+	// Initialize colly - Hover
 	c1 := colly.NewCollector(
 		colly.AllowedDomains(hover),
 	)
 
-	// Initialize items slice
-	var items []Item
-
-	// Scrape Data - klaviyo
-	selector := KlaviyoSelector{
+	// Set selectors - Klaviyo
+	selector := scraper.Selector{
 		Container: ".components-container .component-inner-container",
 		Name:      ".name",
 		Status:    ".component-status",
 	}
 
-	c.OnHTML(selector.Container, func(h *colly.HTMLElement) {
-		item := Item{
-			Service: "Klaviyo",
-			Name:    h.ChildText(selector.Name),
-			Status:  h.ChildText(selector.Status),
-		}
-		items = append(items, item)
-	})
-
-	c.Visit("https://status.klaviyo.com/")
-
-	// Scrape data - hover
-	selector1 := HoverSelector{
+	// Set selectors - Hover
+	selector1 := scraper.Selector{
 		Container: "#statusio_components .component",
 		Name:      ".component_name",
 		Status:    ".component-status",
 	}
 
-	c1.OnHTML(selector1.Container, func(h *colly.HTMLElement) {
-		item := Item{
-			Service: "Hover",
-			Name:    h.ChildText(selector1.Name),
-			Status:  h.ChildText(selector1.Status),
-		}
-		items = append(items, item)
-	})
+	// Initialize items slice
+	var items []scraper.Item
 
-	c1.Visit("https://hoverstatus.com/")
+	// Scrape data - Klaviyo, Hover
+	items = append(items, scraper.ScrapeData(c, selector, "Klaviyo", "https://status.klaviyo.com/")...)
+	items = append(items, scraper.ScrapeData(c1, selector1, "Hover", "https://hoverstatus.com/")...)
 
-	// Create data points - klaviyo, hover
+	// Create data points - Klaviyo, Hover
 	var dataPoints []DataPoint
 
 	for _, i := range items {
@@ -115,20 +94,21 @@ func main() {
 		})
 	}
 
-	// Validate dataPoints looks correct
-	m, err := json.MarshalIndent(dataPoints, "", "  ")
+	// Validate dataPoints
+	res, err := json.MarshalIndent(dataPoints, "", "  ")
 
 	if err != nil {
 		fmt.Println("Error marshaling Person to JSON:", err)
 		return
 	}
 
-	fmt.Println(string(m))
+	fmt.Println(string(res))
 
 	// Connect to InfluxDB
 	client := influxdb2.NewClient("http://localhost:8086", token)
 	writeAPI := client.WriteAPIBlocking(org, bucket)
 
+	// Write to InfluxDB
 	for _, dp := range dataPoints {
 		p := influxdb2.NewPoint(dp.Measurement, dp.Tags, dp.Fields, dp.Time)
 		err := writeAPI.WritePoint(context.Background(), p)
@@ -136,8 +116,6 @@ func main() {
 			fmt.Printf("Error writing point to InfluxDB: %v\n", err)
 		}
 	}
-
-	fmt.Println("Data written to InfluxDB")
 
 	// Close client
 	client.Close()
